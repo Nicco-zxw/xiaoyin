@@ -1,0 +1,33 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/studio?connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true}
+    username: ${DB_USER:studio}
+    password: ${DB_PASSWORD:studio_dev_password}
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+server:
+  servlet:
+    session:
+      timeout: 8h
+      cookie:
+        http-only: true
+        same-site: lax
+        secure: ${COOKIE_SECURE:false}
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+studio:
+  storage: ${STORAGE_PATH:/data/files}
+  simulation-enabled: ${SIMULATION_ENABLED:true}
+  threads: ${WORKER_THREADS:2}
+  queue-capacity: ${QUEUE_CAPACITY:50}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

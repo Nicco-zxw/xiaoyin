@@ -1,0 +1,32 @@
+name: studio-tests
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: studio
+      MYSQL_USER: studio
+      MYSQL_PASSWORD: test_password
+      MYSQL_ROOT_PASSWORD: root_test
+    healthcheck:
+      test: ["CMD-SHELL", "mysql -h 127.0.0.1 -u studio -p$$MYSQL_PASSWORD studio -e 'SELECT 1' >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+  tests:
+    image: maven:3.9.9-eclipse-temurin-21
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+      - maven-test-cache:/root/.m2
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/studio?connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true
+      DB_USER: studio
+      DB_PASSWORD: test_password
+      STORAGE_PATH: /tmp/studio-files
+      INTEGRATION_TEST: 'true'
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: mvn -s maven-settings.xml -B verify
+volumes:
+  maven-test-cache:

@@ -1,0 +1,55 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: studio
+      MYSQL_USER: studio
+      MYSQL_PASSWORD: ${DB_PASSWORD:-studio_dev_password}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_dev_password}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysql -h 127.0.0.1 -u studio -p$$MYSQL_PASSWORD studio -e 'SELECT 1' >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+  backend:
+    build: ./backend
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/studio?connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true
+      DB_USER: studio
+      DB_PASSWORD: ${DB_PASSWORD:-studio_dev_password}
+      STORAGE_PATH: /data/files
+      SIMULATION_ENABLED: ${SIMULATION_ENABLED:-true}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      WORKER_THREADS: ${WORKER_THREADS:-2}
+      QUEUE_CAPACITY: ${QUEUE_CAPACITY:-50}
+    volumes:
+      - file-data:/data/files
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/127.0.0.1/8080'"]
+      interval: 5s
+      timeout: 3s
+      start_period: 20s
+      retries: 20
+    depends_on:
+      mysql:
+        condition: service_healthy
+  frontend:
+    build: ./frontend
+    ports:
+      - "${PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+  smoke:
+    image: node:22-bookworm-slim
+    profiles: ["tools"]
+    volumes:
+      - ./infra:/qa:ro
+    command: node /qa/smoke.mjs
+    depends_on:
+      - frontend
+volumes:
+  mysql-data:
+  file-data:

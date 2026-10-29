@@ -1,0 +1,56 @@
+name: Checks
+on: [push, pull_request]
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    container: node:22-bookworm
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install and verify
+        working-directory: frontend
+        run: npm ci && npm run lint && npm run typecheck && npm test && npm run build
+  backend:
+    runs-on: ubuntu-latest
+    container: maven:3.9.9-eclipse-temurin-21
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root_test
+          MYSQL_DATABASE: studio
+          MYSQL_USER: studio
+          MYSQL_PASSWORD: test_password
+        options: >-
+          --health-cmd="mysql -h 127.0.0.1 -ustudio -ptest_password studio -e 'SELECT 1'"
+          --health-interval=5s --health-timeout=5s --health-retries=30
+    env:
+      DB_URL: jdbc:mysql://mysql:3306/studio?connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true
+      DB_USER: studio
+      DB_PASSWORD: test_password
+      STORAGE_PATH: /tmp/studio-files
+      INTEGRATION_TEST: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test and package
+        working-directory: backend
+        run: mvn -s maven-settings.xml -B verify
+  restart-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and start isolated website
+        run: docker compose -f compose.restart-test.yaml up -d --build --wait mysql backend frontend
+      - name: Prepare running and queued checkpoints
+        run: docker compose -f compose.restart-test.yaml run --rm --no-deps checks before
+      - name: Kill Java without graceful shutdown and start again
+        run: |
+          docker compose -f compose.restart-test.yaml kill -s SIGKILL backend
+          docker compose -f compose.restart-test.yaml up -d --wait backend
+      - name: Verify persisted interruption and retained results
+        run: docker compose -f compose.restart-test.yaml run --rm --no-deps checks after
+      - name: Logs on failure
+        if: failure()
+        run: docker compose -f compose.restart-test.yaml logs --tail=100
+      - name: Clean isolated test environment
+        if: always()
+        run: docker compose -f compose.restart-test.yaml --profile tools down -v

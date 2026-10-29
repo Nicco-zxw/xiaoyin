@@ -1,0 +1,12 @@
+'use client';
+import Link from 'next/link';
+import {useState} from 'react';
+import {useQuery} from '@tanstack/react-query';
+import {api} from '@/lib/api';
+import type {Template} from '@/lib/types';
+export default function Home(){
+ const [category,setCategory]=useState('');
+ const categories=useQuery({queryKey:['categories'],queryFn:({signal})=>api<{items:{id:string;name:string}[]}>('/categories',{signal})});
+ const templates=useQuery({queryKey:['templates',category],queryFn:({signal})=>api<{items:Template[]}>(`/templates${category?'?categoryId='+category:''}`,{signal})});
+ return <div className="discovery"><section className="hero"><div><p className="eyebrow">A LITTLE INSPIRATION, A NEW CREATION</p><h1>给灵感，一个<span>新模样。</span></h1><p>选一个喜欢的模板，上传照片。剩下的，交给素作。</p><div className="hero-notes"><span>✧ 精选创意模板</span><span>◷ 后台持续制作</span><span>▧ 作品随时回看</span></div></div><div className="hero-art" aria-hidden="true"><div className="art-card back"><img src="/api/demo-files/pet.svg" alt=""/></div><div className="art-card front"><img src="/api/demo-files/postcard.svg" alt=""/></div><span className="art-sticker">MAKE IT<br/>YOUR OWN ✳</span></div></section><section><div className="section-heading"><div><p className="eyebrow">EXPLORE THE POSSIBILITIES</p><h2>发现你的下一份创意</h2></div><span className="muted">从日常照片，到特别作品</span></div><div className="filters" aria-label="模板分类"><button aria-pressed={!category} className={!category?'selected':''} onClick={()=>setCategory('')}>全部模板</button>{categories.data?.items.map(c=><button key={c.id} aria-pressed={category===c.id} className={category===c.id?'selected':''} onClick={()=>setCategory(c.id)}>{c.name}</button>)}</div>{categories.isError&&<p role="alert">分类加载失败 <button onClick={()=>void categories.refetch()}>重试</button></p>}{templates.isPending?<div className="empty">正在寻找灵感…</div>:templates.isError?<div className="empty" role="alert">模板加载失败 <button onClick={()=>void templates.refetch()}>重新加载</button></div>:!templates.data.items.length?<div className="empty">这个分类暂时没有模板。</div>:<div className="template-grid">{templates.data.items.map((t,i)=><Link className="template-card" href={`/templates/${t.id}`} key={t.id}><div className="template-cover"><img src={t.coverUrl} alt={t.title}/><span className="template-number">0{i+1}</span><span className="cover-cta">开始创作 ↗</span></div><div className="template-info"><div><h3>{t.title}</h3><p>{t.description}</p></div><span className="image-count">{t.requiredImageCount} 张素材</span></div></Link>)}</div>}</section></div>;
+}
