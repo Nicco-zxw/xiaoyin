@@ -32,6 +32,8 @@
 
 本记录描述本地容器验证；没有声称 GitHub 托管 CI 已实际运行或完成公网部署。
 
+补充：功能源码上传后，GitHub 托管 CI 已成功执行，见文末远端记录；上述本地记录与远端记录分别保留。
+
 ## 边界补齐（2026-10-29）
 
 新增边界测试发现非数字分页参数被通用 Exception handler 映射为 500。先运行复现用例，得到 `expected 400 but was 500`；随后为参数类型不匹配、请求字段缺失和 multipart 部件缺失添加专用 400 / VALIDATION_ERROR 处理。完整 Java 15 个测试通过，重启测试还通过真实 HTTP 验证该错误映射。
@@ -45,3 +47,7 @@
 - 在更新后的端口 3000 环境执行真实 HTTP smoke：注册登录、CSRF、PNG 上传、快速受理、成功／指定阶段失败、结果图片、跨用户隔离、重新登录恢复历史、退出均通过。
 - 此次 smoke 已增加 page=abc、size 整数溢出及缺少上传字段的 400 / VALIDATION_ERROR 检查，确认最新异常映射修复已经部署生效。
 - 后端、前端和 MySQL 均处于运行状态；内存 Session 在 Java 重启后失效，原用户需刷新并重新登录。
+
+## 远端 CI
+
+功能交付提交 `c2ae41a788f2600b14e147ff11e1c4fd813ebb74` 已推送至 main。[GitHub Actions Checks](https://github.com/Nicco-zxw/xiaoyin/actions/runs/40827771643) 状态为 completed / success。此次记录对应该提交，后续文档和代码提交的检查结果以各自运行记录为准。没有公网部署。

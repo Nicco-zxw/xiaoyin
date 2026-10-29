@@ -4,6 +4,8 @@
 
 Next.js + Java 三阶段异步素材制作演示。无需 AI 凭据，模板与结果使用项目内原创几何图片。当前开发和验证进度见文末，不能把设计文档等同于运行验证。
 
+评审入口：[项目说明与设计思路](docs/project-explanation.md) · [接口契约](docs/api-contract.md) · [验证记录](docs/verification.md)。
+
 ## 一键运行
 
 安装 Docker Desktop（Linux containers）或 Docker Engine + Compose，复制 `.env.example` 为 `.env`（可选），在项目根目录执行：
@@ -137,7 +139,7 @@ docker compose run --rm smoke
 
 ## 完成状态与已知限制
 
-R-01–R-14 的核心业务与工程交付已实现。容器内 Java 15 个测试、前端 10 个测试、lint、类型检查、生产构建以及整站 HTTP smoke 通过；Compose 镜像构建和启动通过。已补齐队列拒绝、123 条分页、文件缺失、输入边界和真实 SIGKILL 重启检查；同时修复非法参数误报 500。浏览器已检查主要页面与真实注册、上传、制作、失败和刷新恢复交互。详细证据与截图见 [验证记录](docs/verification.md)。GitHub Actions 配置已提供并加入重启检查，但未推送到远端执行；未做公网部署。
+R-01–R-14 的核心业务与工程交付已实现。容器内 Java 15 个测试、前端 10 个测试、lint、类型检查、生产构建以及整站 HTTP smoke 通过；Compose 镜像构建和启动通过。已补齐队列拒绝、123 条分页、文件缺失、输入边界和真实 SIGKILL 重启检查；同时修复非法参数误报 500。浏览器已检查主要页面与真实注册、上传、制作、失败和刷新恢复交互。详细证据与截图见 [验证记录](docs/verification.md)。首次功能交付的 [GitHub Actions](https://github.com/Nicco-zxw/xiaoyin/actions/runs/40827771643) 已全部通过，包含前端、后端和重启检查；后续提交状态以 Actions 为准。未做公网部署。
 
 首轮开发和验证约 45 分钟，边界测试补齐另约 20 分钟，包含镜像、依赖下载和容器启动等待；不是人工独立开发工时统计。数据库迁移有 Flyway 对 MySQL 8.4 的版本验证范围提示，实际 MySQL 8.4 迁移与 API 测试已通过，提示详见验证记录。
 
